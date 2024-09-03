@@ -70,20 +70,19 @@ FROM
     dwb_prvc_price;
 
 
--- 计算每个省份中价格涨幅的前十名品种
-WITH ranked_price_rise AS (
-    SELECT
-        prvc,
-        pz,
-        price,
-        rise,
-        release_date,
-        ROW_NUMBER() OVER (PARTITION BY prvc ORDER BY rise DESC) AS rank
-    FROM
-        dws_prvc_price_rise
-)
+-- 创建临时表以存储计算结果
+CREATE TEMPORARY TABLE ranked_price_rise AS
+SELECT
+    prvc,
+    pz,
+    price,
+    rise,
+    release_date,
+    ROW_NUMBER() OVER (PARTITION BY prvc, release_date ORDER BY rise DESC) AS rank
+FROM
+    dws_prvc_price_rise;
 
--- 涨幅排名前十
+-- 将涨幅排名前十的品种插入目标表
 INSERT OVERWRITE TABLE ads_price_rise
 SELECT
     prvc,
