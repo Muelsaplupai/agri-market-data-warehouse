@@ -1,4 +1,4 @@
-INSERT INTO dwd_price /* 提取省份 */
+INSERT OVERWRITE dwd_price /* 提取省份 */
 SELECT
     market,
     CASE 
