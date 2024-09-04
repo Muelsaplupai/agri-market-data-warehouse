@@ -22,6 +22,10 @@ SELECT
         ELSE '1970-01-01' -- 默认值
     END AS opening_date,
     CASE
+        WHEN manager IS NULL THEN '暂无'
+        ELSE trim(manager)
+    END AS manager,
+    CASE
         WHEN manager_phone IS NULL THEN '暂无'
         ELSE trim(manager_phone)
     END AS manager_phone,

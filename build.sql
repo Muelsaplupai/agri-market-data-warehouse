@@ -132,7 +132,6 @@ CREATE TABLE IF NOT EXISTS dwd_market
     (name STRING COMMENT '市场名称',
     unit_type STRING COMMENT '经营类型',
     addr STRING COMMENT '地址',
-    entry_date DATE COMMENT '注册时间',
     opening_date DATE COMMENT '开放时间',
     manager STRING COMMENT '负责人姓名',
     manager_phone STRING COMMENT '负责人手机号',
@@ -224,7 +223,7 @@ CREATE TABLE IF NOT EXISTS dws_prvc_price_rise
     pz STRING COMMENT '品种名称',
     price STRING COMMENT '价格',
     rise STRING COMMENT '涨幅')
-    COMMENT 'DWS各省价格分析'
+    COMMENT 'DWS价格涨幅分析'
     PARTITIONED BY (release_date DATE COMMENT '发布日期')
     STORED AS ORC
     LOCATION '/agrimarket/dws/dws_prvc_price_rise';
