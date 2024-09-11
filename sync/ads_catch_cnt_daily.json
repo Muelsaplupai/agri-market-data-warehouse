@@ -1,0 +1,42 @@
+{
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "hdfsreader",
+                    "parameter": {
+                        "column": ["*"],
+                        "defaultFS": "hdfs://iZgc7finmgeai08mpnq74pZ:8020",
+                        "encoding": "UTF-8",
+                        "fieldDelimiter": "\t",
+                        "nullFormat": "\\N",
+                        "fileType": "text",
+                        "path": "/agrimarket/ads/ads_catch_cnt_daily/*"
+                    }
+                },
+                "writer": {
+                    "name": "mysqlwriter",
+                    "parameter": {
+                        "column": ["pz_count", "market_count", "data_count", "article_count"],
+                        "connection": [
+                            {
+                                "jdbcUrl": "jdbc:mysql://rm-gc78nt8lf868p2611xo.mysql.cn-chengdu.rds.aliyuncs.com:3306/agrimarket",
+                                "table": ["catch_daily"]
+                            }
+                        ],
+                        "password": "Fiammetta!1",
+                        "preSql": ["TRUNCATE TABLE catch_daily"],
+                        "session": [],
+                        "username": "root",
+                        "writeMode": "insert"
+                    }
+                }
+            }
+        ],
+        "setting": {
+            "speed": {
+                "channel": "4"
+            }
+        }
+    }
+}

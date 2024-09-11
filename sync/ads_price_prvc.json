@@ -1,0 +1,41 @@
+{
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "hdfsreader",
+                    "parameter": {
+                        "column": ["*"],
+                        "defaultFS": "hdfs://iZgc7finmgeai08mpnq74pZ:8020",
+                        "encoding": "UTF-8",
+                        "fieldDelimiter": "\t",
+                        "fileType": "text",
+                        "path": "/agrimarket/ads/ads_price_prvc/*"
+                    }
+                },
+                "writer": {
+                    "name": "mysqlwriter",
+                    "parameter": {
+                        "column": ["name"],
+                        "connection": [
+                            {
+                                "jdbcUrl": "jdbc:mysql://rm-gc78nt8lf868p2611xo.mysql.cn-chengdu.rds.aliyuncs.com:3306/agrimarket",
+                                "table": ["prvc"]
+                            }
+                        ],
+                        "password": "Fiammetta!1",
+                        "preSql": [],
+                        "session": [],
+                        "username": "root",
+                        "writeMode": "replace"
+                    }
+                }
+            }
+        ],
+        "setting": {
+            "speed": {
+                "channel": "4"
+            }
+        }
+    }
+}

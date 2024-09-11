@@ -1,13 +1,14 @@
+DROP DATABASE IF EXISTS agrimarket;
+CREATE DATABASE agrimarket;
+use agrimarket;
+
 CREATE EXTERNAL TABLE IF NOT EXISTS ods_price
     (market STRING COMMENT '市场名称',
     pz STRING COMMENT '品种名称',
-    province STRING COMMENT '省份名称',
     release_date DATE COMMENT '发布时间',
     highest DOUBLE COMMENT '最高价格',
     lowest DOUBLE COMMENT '最低价格',
-    average DOUBLE COMMENT '平均价格',
-    rise DOUBLE COMMENT '均价涨幅',
-    pl STRING COMMENT '品类信息')
+    average DOUBLE COMMENT '平均价格')
     COMMENT 'ODS价格信息'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
     LOCATION '/agrimarket/ods/ods_price';
@@ -25,7 +26,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS ods_guide
 CREATE EXTERNAL TABLE IF NOT EXISTS ods_article
     (title STRING COMMENT '资讯标题',
     link STRING COMMENT '来源网址',
-    release_date STRING COMMENT '发布日期',
+    release_date DATE COMMENT '发布日期',
     prvc STRING COMMENT '省份')
     COMMENT 'ODS农业资讯'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
@@ -51,7 +52,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS ods_market
 CREATE EXTERNAL TABLE IF NOT EXISTS ods_price_index
     (release_date DATE COMMENT '发布时间',
     name STRING COMMENT '指数名称',
-    index STRING COMMENT '指数值')
+    index DOUBLE COMMENT '指数值')
     COMMENT 'ODS价格指数'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
     LOCATION '/agrimarket/ods/ods_price_index';
@@ -196,6 +197,21 @@ CREATE TABLE IF NOT EXISTS dwd_consumption_person
  * ------------------------- DWB层 -------------------------------------*
  ************************************************************************/
 
+-- 创建新的表
+CREATE TABLE IF NOT EXISTS dwb_price_7days
+    (market STRING COMMENT '市场名称',
+    pz STRING COMMENT '品种名称',
+    avg_price_day1 DOUBLE COMMENT 'day1平均价格',
+    avg_price_day2 DOUBLE COMMENT 'day2平均价格',
+    avg_price_day3 DOUBLE COMMENT 'day3平均价格',
+    avg_price_day4 DOUBLE COMMENT 'day4平均价格',
+    avg_price_day5 DOUBLE COMMENT 'day5平均价格',
+    avg_price_day6 DOUBLE COMMENT 'day6平均价格',
+    avg_price_day7 DOUBLE COMMENT 'day7平均价格')
+    COMMENT '各市场各品种近七天的平均价格'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_price_7days';
+
 CREATE TABLE IF NOT EXISTS dwb_price
     (prvc STRING COMMENT '省份名称',
      pz STRING COMMENT '品种名称',
@@ -205,16 +221,57 @@ CREATE TABLE IF NOT EXISTS dwb_price
     STORED AS ORC
     LOCATION '/agrimarket/dwb/dwb_price';
 
+DROP TABLE IF EXISTS dwb_catch_cnt_daily;
 CREATE TABLE IF NOT EXISTS dwb_catch_cnt_daily
     (pz_cnt INTEGER COMMENT '品种总数',
     market_cnt INTEGER COMMENT '市场总数',
     data_cnt INTEGER COMMENT '价格数据总数',
-    article_cnt INTEGER COMMENT '资讯总数')
+    enterprise_cnt INTEGER COMMENT '企业总数')
     COMMENT 'DWB全国每日抓取数据量汇总'
     PARTITIONED BY (release_date DATE COMMENT '发布日期')
     STORED AS ORC
     LOCATION '/agrimarket/dwb/dwb_catch_cnt_daily';
 
+CREATE TABLE IF NOT EXISTS dwb_brief_market_pz_cnt
+    (market STRING COMMENT '市场名称',
+    pz_cnt STRING COMMENT '品种数量')
+    COMMENT 'DWB各市场品种数量汇总'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_brief_market_pz_cnt';
+
+CREATE TABLE IF NOT EXISTS dwb_brief_market_diff
+    (market STRING COMMENT '市场名称',
+    pz STRING COMMENT '品种名称',
+    diff_price DOUBLE COMMENT '与省内均价之差')
+    COMMENT 'DWB各市场各品种与省内均价之差'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_brief_market_diff';
+
+CREATE TABLE IF NOT EXISTS dwb_brief_prvc
+    (prvc STRING COMMENT '省份名称',
+    market_cnt INTEGER COMMENT '市场数量',
+    main_pz STRING COMMENT '主营品种')
+    COMMENT 'DWB各省市场数量与主营品种'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_brief_market_diff';
+
+DROP TABLE IF EXISTS dwb_brief_prvc_diff;
+CREATE TABLE IF NOT EXISTS dwb_brief_prvc_diff
+    (prvc STRING COMMENT '省份名称',
+    pz STRING COMMENT '品种名称',
+    diff_price DOUBLE COMMENT '与全国均价之差')
+    COMMENT 'DWB各省份各品种与全国均价之差'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_brief_prvc_diff';
+
+DROP TABLE IF EXISTS dwb_brief_pz;
+CREATE TABLE IF NOT EXISTS dwb_brief_pz
+    (pz STRING COMMENT '品种名称',
+    low_prvc STRING COMMENT '低价省份',
+    high_prvc STRING COMMENT '高价省份')
+    COMMENT 'DWB各品种低价高价省份'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_brief_pz';
 /************************************************************************
  * ------------------------- DWS层 -------------------------------------*
  ************************************************************************/
@@ -229,11 +286,14 @@ CREATE TABLE IF NOT EXISTS dws_prvc_price_rise
     STORED AS ORC
     LOCATION '/agrimarket/dws/dws_prvc_price_rise';
 
+DROP TABLE IF EXISTS dws_price_index;
 CREATE TABLE IF NOT EXISTS dws_price_index
     (pl STRING COMMENT '品类名称',
      type STRING COMMENT '指数类型',
      index DOUBLE COMMENT '指数',
      rise DOUBLE COMMENT '涨幅',
+     rise3 DOUBLE COMMENT '3日涨幅',
+     rise5 DOUBLE COMMENT '5日涨幅',
      qoq DOUBLE COMMENT '环比')
     COMMENT 'DWS今日价格指数分析'
     STORED AS ORC
@@ -249,6 +309,15 @@ CREATE TABLE IF NOT EXISTS dws_supply_and_demand
     STORED AS ORC
     LOCATION '/agrimarket/dws/dws_supply_and_demand';
 
+CREATE TABLE IF NOT EXISTS dws_brief_market
+    (market STRING COMMENT '市场名称',
+    pz_cnt INTEGER COMMENT '品种数量',
+    high_pz INTEGER COMMENT '高价品种',
+    low_pz STRING COMMENT '低价品种')
+    COMMENT 'DWS指定市场的智能总结'
+    STORED AS ORC
+    LOCATION '/agrimarket/dws/dws_brief_market';
+
 /************************************************************************
  * ------------------------- ADS层 -------------------------------------*
  ************************************************************************/
@@ -259,6 +328,12 @@ CREATE TABLE IF NOT EXISTS ads_price_pz
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
     LOCATION '/agrimarket/ads/ads_price_pz';
 
+CREATE TABLE IF NOT EXISTS ads_price_prvc
+    (prvc STRING COMMENT '省份名称')
+    COMMENT 'ADS省份表'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_price_prvc';
+
 CREATE TABLE IF NOT EXISTS ads_price
     (market STRING COMMENT '市场名称',
     prvc STRING COMMENT '省份名称',
@@ -266,7 +341,7 @@ CREATE TABLE IF NOT EXISTS ads_price
     highest DOUBLE COMMENT '最高价',
     lowest DOUBLE COMMENT '最低价',
     average DOUBLE COMMENT '平均价',
-    release_date DOUBLE COMMENT '发布日期')
+    release_date DATE COMMENT '发布日期')
     COMMENT 'ADS历史价格'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
     LOCATION '/agrimarket/ads/ads_price';
@@ -289,8 +364,9 @@ CREATE TABLE IF NOT EXISTS ads_price_fall
      release_date DATE COMMENT '发布日期')
     COMMENT 'ADS各省价格跌幅前十名'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-    LOCATION '/agrimarket/ads/ads_price_rise';
+    LOCATION '/agrimarket/ads/ads_price_fall';
 
+DROP TABLE ads_guide;
 CREATE TABLE IF NOT EXISTS ads_guide
     (title STRING COMMENT '文章标题',
     release_date DATE COMMENT '发布日期',
@@ -299,6 +375,7 @@ CREATE TABLE IF NOT EXISTS ads_guide
     pz STRING COMMENT '品种名称')
     COMMENT 'ADS农事指导'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    NULL DEFINED AS ''
     LOCATION '/agrimarket/ads/ads_guide';
 
 CREATE TABLE IF NOT EXISTS ads_article
@@ -325,20 +402,24 @@ CREATE TABLE IF NOT EXISTS ads_market
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
     LOCATION '/agrimarket/ads/ads_market';
 
+DROP TABLE IF EXISTS ads_catch_cnt_daily;
 CREATE TABLE IF NOT EXISTS ads_catch_cnt_daily
     (pz_cnt INTEGER COMMENT '品种总数',
     market_cnt INTEGER COMMENT '市场总数',
     data_cnt INTEGER COMMENT '价格数据总数',
-    article INTEGER COMMENT '资讯总数')
+    enterprise_cnt INTEGER COMMENT '企业数量总数')
     COMMENT 'ADS全国每日抓取数量'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
     LOCATION '/agrimarket/ads/ads_catch_cnt_daily';
 
+DROP TABLE IF EXISTS ads_price_index;
 CREATE TABLE IF NOT EXISTS ads_price_index
     (pl STRING COMMENT '品类名称',
     type STRING COMMENT '指数类型',
     index DOUBLE COMMENT '指数',
     rise DOUBLE COMMENT '涨幅',
+    rise3 DOUBLE COMMENT '3日涨幅',
+    rise5 DOUBLE COMMENT '5日涨幅',
     qoq DOUBLE COMMENT '环比')
     COMMENT 'ADS今日价格指数'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
@@ -385,3 +466,111 @@ CREATE TABLE IF NOT EXISTS ads_consumption_person
     COMMENT 'ADS人均消费数据'
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
     LOCATION '/agrimarket/ads/ads_consumption_person';
+
+CREATE TABLE IF NOT EXISTS ads_price_predict
+    (market STRING COMMENT '市场名称',
+    pz STRING COMMENT '品种名称',
+    prvc STRING COMMENT '省份名称',
+    release_date DATE COMMENT '预测日期',
+    average DOUBLE COMMENT '预测价格')
+    COMMENT '各市场各品种未来三天的预测价格'
+    STORED AS ORC
+    LOCATION '/agrimarket/dwb/dwb_price_forecast';
+
+DROP TABLE IF EXISTS ads_price_prvcs;
+CREATE TABLE IF NOT EXISTS ads_price_prvcs
+    (pz STRING COMMENT '品种名称',
+    prvc STRING COMMENT '省份名称',
+    average STRING COMMENT '平均价',
+    release_date DATE COMMENT '发布日期')
+    COMMENT '各省各品种历史价格'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_price_prvcs';
+
+CREATE TABLE IF NOT EXISTS ads_brief_market
+    (market STRING COMMENT '市场名称',
+    pz_cnt INTEGER COMMENT '品种数量',
+    low_pz STRING COMMENT '低价品种',
+    high_pz STRING COMMENT '高价品种')
+    COMMENT 'ADS指定市场的智能总结'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_brief_market';
+
+CREATE TABLE IF NOT EXISTS ads_brief_market_pz
+    (market STRING COMMENT '市场名称',
+    pz STRING COMMENT '品种名称',
+    average DOUBLE COMMENT '平均价格',
+    highest DOUBLE COMMENT '最高价格',
+    lowest DOUBLE COMMENT '最低价格',
+    variation DOUBLE COMMENT '价格变化',
+    predict_td DOUBLE COMMENT '今日预测值',
+    predict_tm DOUBLE COMMENT '明日预测值')
+    COMMENT 'ADS指定市场和品种的智能总结'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_brief_market_pz';
+
+CREATE TABLE IF NOT EXISTS ads_brief_prvc
+    (prvc STRING COMMENT '省份名称',
+    market_num INTEGER COMMENT '市场数量',
+    main_pz STRING COMMENT '主营品种',
+    low_pz STRING COMMENT '低价品种',
+    high_pz STRING COMMENT '高价品种')
+    COMMENT 'ADS指定省份的智能总结'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_brief_prvc';
+
+DROP TABLE IF EXISTS ads_brief_pz;
+CREATE TABLE IF NOT EXISTS ads_brief_pz
+    (pz STRING COMMENT '品种名称',
+    average DOUBLE COMMENT '全国均价',
+    low_prvc STRING COMMENT '低价省',
+    high_prvc STRING COMMENT '高价省')
+    COMMENT 'ADS指定品种的智能总结'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_brief_pz';
+
+CREATE TABLE IF NOT EXISTS ads_price_variation_daily
+    (pz STRING COMMENT '品种名称',
+    market STRING COMMENT '市场名称',
+    variation STRING COMMENT '价格变化')
+    COMMENT 'ADS今日价格变化'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_price_variation';
+
+CREATE TABLE IF NOT EXISTS ads_price_prvc_variation_daily
+    (pz STRING COMMENT '品种名称',
+    prvc STRING COMMENT '省份名称',
+    variation DOUBLE COMMENT '价格变化')
+    COMMENT 'ADS各省份今日价格变化'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_price_prvc_variation';
+
+CREATE TABLE IF NOT EXISTS ads_price_prvc_peak_daily
+    (prvc STRING COMMENT '省份名称',
+    pz STRING COMMENT '品种名称',
+    highest DOUBLE COMMENT '最高价格',
+    lowest DOUBLE COMMENT '最低价格')
+    COMMENT 'ADS各省份各品种今日价格极值'
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+    LOCATION '/agrimarket/ads/ads_price_prvc_peak_daily';
+
+/************************************************************************
+ * ------------------------- Utils层 -------------------------------------*
+ ************************************************************************/
+CREATE TABLE IF NOT EXISTS utils_index
+(name STRING COMMENT '指数名称',
+ pl STRING COMMENT '品类名称',
+ type INTEGER COMMENT '类型编号, 1是价格, 2是200')
+    COMMENT '指数-类型对应表'
+    STORED AS ORC
+    LOCATION '/agrimarket/utils/index';
+    
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('粮油产品批发价格指数', '粮油产品', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('畜产品价格指数', '畜产品', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('水产品价格指数', '水产品', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('蔬菜价格指数', '蔬菜', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('水果价格指数', '水果', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('粮食价格指数', '粮食', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('食用油价格指数', '食用油', 1);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('农产品批发价格200指数', '农产品', 2);
+INSERT INTO agrimarket.utils_index (name, pl, type) VALUES ('“菜篮子”产品批发价格指数', '菜篮子产品', 1);

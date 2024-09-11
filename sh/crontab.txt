@@ -1,0 +1,5 @@
+0 0 * * * /usr/bin/python /export/spider/prices.py >> /export/spider/logs/spider.log 2>&1 && /usr/bin/python /export/spider/todayIndex.py >> /export/spider/logs/spider.log 2>&1 && /export/spider/hdfs_upload.sh >> /export/spider/logs/spider.log 2>&1
+
+0 5 * * * /export/agrimarket/analysis/analysis.sh >> /export/agrimarket/analysis/logs.analysis.log 2>&1
+
+0 6 * * * /export/agrimarket/datax/ads_sync.sh >> /export/agrimarket/datax/log/sync.log 2>&1

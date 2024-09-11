@@ -1,2 +1,0 @@
-* * * * * PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/hadoop/bin
-0 1 * * * /usr/bin/python /export/spider/prices.py >> /export/spider/logs/spider.log 2>&1 && /usr/bin/python /export/spider/todayIndex.py >> /export/spider/logs/spider.log 2>&1 && /export/spider/hdfs_upload.sh >> /export/spider/logs/spider.log 2>&1

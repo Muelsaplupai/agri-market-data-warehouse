@@ -1,0 +1,42 @@
+{
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "hdfsreader",
+                    "parameter": {
+                        "column": ["*"],
+                        "defaultFS": "hdfs://iZgc7finmgeai08mpnq74pZ:8020",
+                        "encoding": "UTF-8",
+                        "fieldDelimiter": "\t",
+                        "nullFormat": "\\N",
+                        "fileType": "text",
+                        "path": "/agrimarket/ads/ads_guide/*"
+                    }
+                },
+                "writer": {
+                    "name": "mysqlwriter",
+                    "parameter": {
+                        "column": ["title", "release_date", "brief", "link", "pz"],
+                        "connection": [
+                            {
+                                "jdbcUrl": "jdbc:mysql://rm-gc78nt8lf868p2611xo.mysql.cn-chengdu.rds.aliyuncs.com:3306/agrimarket",
+                                "table": ["article_guide"]
+                            }
+                        ],
+                        "password": "Fiammetta!1",
+                        "preSql": ["TRUNCATE TABLE article_guide"],
+                        "session": [],
+                        "username": "root",
+                        "writeMode": "replace"
+                    }
+                }
+            }
+        ],
+        "setting": {
+            "speed": {
+                "channel": "4"
+            }
+        }
+    }
+}
